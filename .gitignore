@@ -1,0 +1,8 @@
+*.log
+.py[cod]
+.DS_Store
+.idea
+__pycache__/
+Banana.app/*
+.ipynb_checkpoints/*
+
