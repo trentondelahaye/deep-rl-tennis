@@ -20,6 +20,10 @@ log = logging.getLogger()
 
 
 class DDPGAgentEnsemble(AgentEnsemble):
+    """Implements the DDPG algorithm to be used with multiple agents sharing the same
+    actor and critic.
+    """
+
     train_with_noise = True
     torch_states = (
         "actor",
@@ -59,7 +63,7 @@ class DDPGAgentEnsemble(AgentEnsemble):
         # Exploration noise
         self.noise = OrnsteinUhlenbeckNoise((self.number_of_agents, self.action_size))
 
-        # Actor
+        # Initialise local and target actor networks
         self.actor_tau = actor_tau
         self.actor_lr = actor_lr
         self.actor_fc_layers = actor_fc_layers
@@ -71,7 +75,7 @@ class DDPGAgentEnsemble(AgentEnsemble):
         ).to(device)
         self.actor_optimizer = Adam(self.actor.parameters(), lr=self.actor_lr)
 
-        # Critic
+        # Initialise local and target critic networks
         self.critic_tau = critic_tau
         self.critic_lr = critic_lr
         self.critic_fc_layers = critic_fc_layers
@@ -87,6 +91,9 @@ class DDPGAgentEnsemble(AgentEnsemble):
         self.noise.reset()
 
     def save(self, *args, filename: str = "", **kwargs):
+        """Function for saving the model weights of all neural networks
+        in the agent
+        """
         if not len(filename):
             log.warning("Please provide a filename")
             return
@@ -100,6 +107,9 @@ class DDPGAgentEnsemble(AgentEnsemble):
         torch.save(state, path)
 
     def load(self, *args, filename: str = "", **kwargs):
+        """Function for loading the saved model weights of all neural networks
+        in the agent
+        """
         if not len(filename):
             log.warning("Please provide a filename")
             return
@@ -120,11 +130,14 @@ class DDPGAgentEnsemble(AgentEnsemble):
             log.warning(f"Unable to load agent state: {e}")
 
     def act(self, state: np.ndarray, add_noise: bool = True) -> np.ndarray:
+        # take the state turn into a torch tensor
         state = torch.from_numpy(state).float().to(device)
         self.actor.eval()
         with torch.no_grad():
             actions = self.actor(state).cpu().data.numpy()
         self.actor.train()
+
+        # add noise to encourage exploration
         if add_noise and self.train_with_noise:
             actions += self.noise.sample()
         return np.clip(actions, -1, 1)
@@ -137,11 +150,13 @@ class DDPGAgentEnsemble(AgentEnsemble):
         next_state: np.ndarray,
         done: np.ndarray,
     ):
+        # for each agent add the experiences to the global buffer
         for i in range(self.number_of_agents):
             self.memory.add_experience(
                 state[i, :], action[i, :], reward[i], next_state[i, :], done[i]
             )
 
+        # train the model
         self.t_step = (self.t_step + 1) % self.update_every
         if self.t_step == 0 and len(self.memory) > self.memory.batch_size:
             experiences = self.memory.sample_experiences()
@@ -150,26 +165,33 @@ class DDPGAgentEnsemble(AgentEnsemble):
     def _learn(self, experiences: Experiences) -> None:
         states, actions, rewards, next_states, dones = experiences
 
+        # work out the expected q of the next states then discount
+        # and add reward for current states
         actions_next = self.actor_target(next_states)
         q_targets_next = self.critic_target(next_states, actions_next)
         q_targets = rewards + (self.gamma * q_targets_next * (1 - dones))
         q_expected = self.critic(states, actions)
 
+        # work out the loss of expected q and optimise the critic
         critic_loss = F.mse_loss(q_expected, q_targets)
         self.critic_optimizer.zero_grad()
         critic_loss.backward()
         self.critic_optimizer.step()
 
+        # predict the best actions with the actor
         actions_pred = self.actor(states)
         actor_loss = -self.critic(states, actions_pred).mean()
 
+        # optimise the actions to increase the score (minimise negative loss)
         self.actor_optimizer.zero_grad()
         actor_loss.backward()
         self.actor_optimizer.step()
 
+        # perform a soft update between local and target networks
         self._soft_update()
 
     def _soft_update(self):
+        # soft update by mixing local and target params on the target actor network
         for target_param, param in zip(
             self.actor_target.parameters(), self.actor.parameters()
         ):
@@ -177,6 +199,7 @@ class DDPGAgentEnsemble(AgentEnsemble):
                 self.actor_tau * param.data + (1.0 - self.actor_tau) * target_param.data
             )
 
+        # soft update by mixing local and target params on the target critic network
         for target_param, param in zip(
             self.critic_target.parameters(), self.critic.parameters()
         ):

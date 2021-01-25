@@ -13,6 +13,9 @@ Experiences = Tuple[States, Actions, Rewards, NextStates, Dones]
 
 
 class AgentEnsemble(ABC):
+    """Abstract base class for a collection of multiple agents using the same
+    actor and critics.
+    """
     def __init__(self, number_of_agents: int, state_size: int, action_size: int):
         self.number_of_agents = number_of_agents
         self.state_size = state_size

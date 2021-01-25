@@ -4,6 +4,8 @@ import numpy as np
 
 
 class OrnsteinUhlenbeckNoise:
+    """Implementation of Ornstein Uhlenbeck autocorrelated noise.
+    """
     def __init__(
         self,
         size: Tuple[int, ...],
@@ -18,9 +20,12 @@ class OrnsteinUhlenbeckNoise:
         self.state = self.mu * np.ones(size)
 
     def reset(self):
+        # return to the
         self.state = self.mu * np.ones(self.size)
 
     def sample(self):
+        # return autocorrelated noise based on the current state
+        # and Gaussian noise
         x = self.state
         dx = self.theta * (self.mu - x)
         dx += self.sigma * np.random.randn(*self.size)

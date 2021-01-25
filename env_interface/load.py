@@ -14,6 +14,9 @@ def load_env(env_path: str, no_graphics: bool = False) -> UnityEnvironment:
 
 
 def load_agent(env: UnityEnvironment, agent_cfg: str) -> agents.AgentEnsemble:
+    """Loads the specified agent and params from config, failing if the
+    section is not present.
+    """
     config = ConfigParser()
     config.read("./agents/configs.cfg")
 
@@ -34,6 +37,7 @@ def load_agent(env: UnityEnvironment, agent_cfg: str) -> agents.AgentEnsemble:
 
     agent_name = section.get("agent")
 
+    # attempt to initialise an agent
     try:
         agent: AgentEnsemble = getattr(agents, agent_name)
         return agent.from_config(section, number_of_agents, state_size, action_size)
@@ -57,6 +61,9 @@ class KwargError(BaseException):
 
 
 def build_kwargs(raw_kwargs: List[str], sig: inspect.Signature) -> Dict[str, Any]:
+    """Automatically process the kwargs from input to their correct types.
+    If the type cannot be converted, raise an error.
+    """
     kwargs = {}
     for kwarg in raw_kwargs:
         try:

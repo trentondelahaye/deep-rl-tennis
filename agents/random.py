@@ -6,6 +6,8 @@ from .base import AgentEnsemble
 
 
 class RandomAgentEnsemble(AgentEnsemble):
+    """Implementation of an agent that behaves randomly.
+    """
     def act(self, state: np.ndarray, add_noise: bool = True) -> int:
         return np.random.uniform(-1, 1, size=(self.number_of_agents, self.action_size))
 

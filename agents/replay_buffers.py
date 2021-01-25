@@ -17,6 +17,9 @@ class Experience(NamedTuple):
 
 
 class ReplayBuffer:
+    """Data store for experiences based on a deque. Stores and randomly
+    samples experience tuples.
+    """
     def __init__(self, buffer_size: int, batch_size: int):
         self.memory = deque(maxlen=buffer_size)
         self.batch_size = batch_size
@@ -41,6 +44,7 @@ class ReplayBuffer:
     # noinspection PyTypeChecker
     def sample_experiences(self) -> Experiences:
         experiences = self._sample()
+        # format the experiences for vectorised use for training
         return tuple(
             (
                 torch.from_numpy(
@@ -51,6 +55,7 @@ class ReplayBuffer:
         )
 
     def _sample(self) -> Iterable[Experience]:
+        # randomly sample stored experiences
         return random.sample(self.memory, k=self.batch_size)
 
     def __len__(self):

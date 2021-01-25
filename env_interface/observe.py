@@ -5,6 +5,8 @@ from unityagents import UnityEnvironment
 
 
 def watch_episode(env: UnityEnvironment, agent: AgentEnsemble, **kwargs):
+    """Used to watch the agent perform a single episode in the environment
+    """
     agent.set_train_mode(False)
     brain_name = env.brain_names[0]
     env_info = env.reset(train_mode=False)[brain_name]
