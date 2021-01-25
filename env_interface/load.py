@@ -28,7 +28,9 @@ def load_agent(env: UnityEnvironment, agent_cfg: str) -> agents.AgentEnsemble:
 
     number_of_agents = len(env_info.agents)
     action_size = brain.vector_action_space_size
-    state_size = brain.num_stacked_vector_observations * brain.vector_observation_space_size
+    state_size = (
+        brain.num_stacked_vector_observations * brain.vector_observation_space_size
+    )
 
     agent_name = section.get("agent")
 

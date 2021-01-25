@@ -7,9 +7,9 @@ class OrnsteinUhlenbeckNoise:
     def __init__(
         self,
         size: Tuple[int, ...],
-        mu: float = 0.,
+        mu: float = 0.0,
         theta: float = 0.15,
-        sigma: float = 0.2
+        sigma: float = 0.2,
     ):
         self.mu = mu
         self.size = size

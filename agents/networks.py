@@ -1,17 +1,17 @@
 from typing import Callable, Iterable, Optional, Tuple
 
+import numpy as np
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-
-import numpy as np
 
 LayerSize = int
 
 
 def hidden_init(layer) -> Tuple[float, float]:
     fan_in = layer.weight.data.size()[0]
-    lim = 1. / np.sqrt(fan_in)
+    lim = 1.0 / np.sqrt(fan_in)
     return -lim, lim
 
 
